@@ -1,19 +1,27 @@
 ﻿using System;
-using Android;
 using Android.App;
+using Android.App.Usage;
+using Android.Content;
+using Android.Content.PM;
 using Android.OS;
-using Android.Runtime;
+using Android.OS.Storage;
 using Android.Support.Design.Widget;
 using Android.Support.V4.View;
 using Android.Support.V4.Widget;
 using Android.Support.V7.App;
+using Android.Support.V7.Widget;
 using Android.Views;
+using DroidCleaner.Apps;
 
 namespace DroidCleaner
 {
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class MainActivity : AppCompatActivity, NavigationView.IOnNavigationItemSelectedListener
     {
+        RecyclerView _recyclerView;
+        RecyclerView.LayoutManager _layoutManager;
+        AppsAdapter _adapter;
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -65,10 +73,13 @@ namespace DroidCleaner
 
         private void FabOnClick(object sender, EventArgs eventArgs)
         {
-            View view = (View) sender;
-            Snackbar.Make(view, "Replace with your own action", Snackbar.LengthLong)
-                .SetAction("Action", (Android.Views.View.IOnClickListener)null).Show();
+            //View view = (View) sender;
+            //Snackbar.Make(view, "Replace with your own action", Snackbar.LengthLong)
+            //    .SetAction("Action", (Android.Views.View.IOnClickListener)null).Show();
         }
+
+
+
 
         public bool OnNavigationItemSelected(IMenuItem item)
         {
@@ -80,7 +91,23 @@ namespace DroidCleaner
             }
             else if (id == Resource.Id.nav_gallery)
             {
-
+                var storageStatsManager = (StorageStatsManager)BaseContext.GetSystemService(Context.StorageStatsService);
+                RunOnUiThread(async () =>
+                {
+                    try
+                    {
+                        var apps = await new AppsService().GetInstalledApps(PackageManager, storageStatsManager);
+                        _adapter = new AppsAdapter(this, apps);
+                        _recyclerView = FindViewById<RecyclerView>(Resource.Id.recyclerView);
+                        _recyclerView.SetAdapter(_adapter);
+                        _layoutManager = new LinearLayoutManager(this, LinearLayoutManager.Vertical, false);
+                        _recyclerView.SetLayoutManager(_layoutManager);
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                    }
+                });
             }
             else if (id == Resource.Id.nav_slideshow)
             {
@@ -104,5 +131,9 @@ namespace DroidCleaner
             return true;
         }
     }
+
 }
+
+
+
 
